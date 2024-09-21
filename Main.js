@@ -68,6 +68,15 @@ app.get('/active-containers', async (req, res) => {
   }
 });
 
+app.get('/active', async (req, res) => {
+  try {
+    res.json("Hello");
+  } catch (err) {
+    console.error("Error telling im online!", err);
+    res.status(500).json({ error: 'Error telling im online!' });
+  }
+});
+
 // Start de server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
