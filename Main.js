@@ -3,6 +3,7 @@ const os = require('os');
 const disk = require('diskusage');
 const Docker = require('dockerode'); // Dockerode importeren
 const path = require('path');
+const { exec } = require('child_process');
 
 const app = express();
 const PORT = 5000;
@@ -75,6 +76,26 @@ app.get('/active', async (req, res) => {
     console.error("Error telling im online!", err);
     res.status(500).json({ error: 'Error telling im online!' });
   }
+});
+
+app.get('/nodes', (req, res) => {
+    exec("ps aux | grep '[n]ode'", (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error executing command: ${error}`);
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
+
+        const processes = stdout.split('\n').map(line => {
+            const parts = line.trim().split(/\s+/);
+            return {
+                user: parts[0],
+                pid: parts[1],
+                command: parts.slice(10).join(' '),
+            };
+        }).filter(proc => proc.command); // Remove empty lines
+
+        res.json(processes);
+    });
 });
 
 // Start de server
