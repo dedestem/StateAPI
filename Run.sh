@@ -1,1 +1,1 @@
-node Main.js
+node Status.js
