@@ -1,7 +1,7 @@
 const express = require('express');
-const { exec } = require('child_process');
 const cors = require('cors');
 const fetch = require('node-fetch');
+const si = require('systeminformation');
 
 const app = express();
 const port = 5000;
@@ -14,80 +14,67 @@ async function getExternalIP() {
         return data.ip;
     } catch (error) {
         console.error('Error fetching external IP:', error);
-        return null; // Fallback als er een fout optreedt
+        return null;
     }
 }
 
 (async () => {
     const externalIP = await getExternalIP();
-    
-    // CORS options
+
+    // CORS opties
     const corsOptions = {
-        origin: externalIP ? [externalIP, 'https://davidnet.net'] : ['https://davidnet.net'], // Vervang door je toegestane domeinen
-        optionsSuccessStatus: 200 // Voor legacy browser support
+        origin: externalIP ? [externalIP, 'https://davidnet.net'] : ['https://davidnet.net'],
+        optionsSuccessStatus: 200,
     };
 
-    // Enable CORS for specified origins
+    // Schakel CORS in voor gespecificeerde oorsprongen
     app.use(cors(corsOptions));
 
     // Functie om RAM-gebruik te krijgen
-    app.get('/ram', (req, res) => {
-        exec('free -m', (err, stdout) => {
-            if (err) {
-                console.error('Error fetching RAM usage:', err);
-                return res.status(500).json({ error: 'Internal Server Error' });
-            }
-
-            const lines = stdout.trim().split('\n');
-            const memory = lines[1].trim().split(/\s+/);
-
-            const totalMemory = memory[1]; // Totale geheugen in MB
-            const usedMemory = memory[2]; // Gebruikt geheugen in MB
-            const freeMemory = memory[3]; // Vrij geheugen in MB
-
-            console.log(`RAM Usage - Total: ${totalMemory} MB, Used: ${usedMemory} MB, Free: ${freeMemory} MB`);
-            
+    app.get('/ram', async (req, res) => {
+        try {
+            const memory = await si.mem();
             res.json({
-                total: totalMemory,
-                used: usedMemory,
-                free: freeMemory,
+                total: memory.total,
+                used: memory.used,
+                free: memory.free,
             });
-        });
+        } catch (error) {
+            console.error('Error fetching RAM usage:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
     });
 
     // Functie om schijfgrootte en gebruik te krijgen
-    app.get('/disk', (req, res) => {
-        exec('df -h /path/to/ramdisk --output=size,used,avail,pcent', (err, stdout) => {
-            if (err) {
-                console.error('Error fetching disk usage:', err);
-                return res.status(500).json({ error: 'Internal Server Error' });
-            }
+    app.get('/disk', async (req, res) => {
+        try {
+            const disks = await si.blockDrives();
+            const diskUsage = await si.fsSize();
 
-            const lines = stdout.trim().split('\n');
-            const [size, used, avail, pcent] = lines[1].trim().split(' ');
+            // Neem de eerste schijf als voorbeeld
+            const { size, used, available, use } = diskUsage[0];
 
-            console.log(`Disk Usage - Total: ${size}, Used: ${used}, Available: ${avail}, Percentage Used: ${pcent}`);
-            
             res.json({
-                total: size,  // Totale schijfgrootte
-                used: used,   // Gebruikte schijfruimte
-                available: avail, // Beschikbare schijfruimte
-                percentageUsed: pcent, // Percentage gebruikt
+                total: size,
+                used: used,
+                available: available,
+                percentageUsed: use,
             });
-        });
+        } catch (error) {
+            console.error('Error fetching disk usage:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
     });
 
     // Functie om actieve processen te krijgen
-    app.get('/processes', (req, res) => {
-        exec('ps aux', (err, stdout) => {
-            if (err) {
-                console.error('Error fetching processes:', err);
-                return res.status(500).json({ error: 'Internal Server Error' });
-            }
-            
-            console.log('Fetched active processes');
-            res.send(stdout);
-        });
+    app.get('/processes', async (req, res) => {
+        try {
+            const processes = await si.processes();
+            res.json(processes.list);
+        } catch (error) {
+            console.error('Error fetching processes:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
     });
 
     // Start de server
