@@ -35,9 +35,9 @@ async function getExternalIP() {
         try {
             const memory = await si.mem();
             res.json({
-                total: memory.total,
-                used: memory.used,
-                free: memory.free,
+                total: memory.total,      // Totale RAM in bytes
+                used: memory.used,        // Gebruikte RAM in bytes
+                free: memory.free         // Vrije RAM in bytes
             });
         } catch (error) {
             console.error('Error fetching RAM usage:', error);
@@ -48,17 +48,16 @@ async function getExternalIP() {
     // Functie om schijfgrootte en gebruik te krijgen
     app.get('/disk', async (req, res) => {
         try {
-            const disks = await si.blockDrives();
             const diskUsage = await si.fsSize();
 
-            // Neem de eerste schijf als voorbeeld
-            const { size, used, available, use } = diskUsage[0];
+            // Als er meerdere schijven zijn, gebruik je de eerste. Dit kan worden aangepast.
+            const disk = diskUsage[0];
 
             res.json({
-                total: size,
-                used: used,
-                available: available,
-                percentageUsed: use,
+                total: disk.size,           // Totale schijfgrootte in bytes
+                used: disk.used,            // Gebruikte schijfruimte in bytes
+                available: disk.available,  // Beschikbare schijfruimte in bytes
+                percentageUsed: disk.use    // Percentage gebruikt
             });
         } catch (error) {
             console.error('Error fetching disk usage:', error);
@@ -66,11 +65,21 @@ async function getExternalIP() {
         }
     });
 
-    // Functie om actieve processen te krijgen
+    // Functie om actieve processen netjes te krijgen
     app.get('/processes', async (req, res) => {
         try {
             const processes = await si.processes();
-            res.json(processes.list);
+
+            // Alleen relevante informatie weergeven in een nette lijst
+            const processList = processes.list.map(proc => ({
+                pid: proc.pid,           // Proces ID
+                user: proc.user,         // Gebruiker die het proces uitvoert
+                cpu: proc.pcpu.toFixed(2),  // CPU-gebruik in percentage
+                memory: proc.pmem.toFixed(2), // Geheugengebruik in percentage
+                command: proc.command    // Commando dat het proces uitvoert
+            }));
+
+            res.json(processList);
         } catch (error) {
             console.error('Error fetching processes:', error);
             res.status(500).json({ error: 'Internal Server Error' });
