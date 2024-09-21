@@ -6,6 +6,11 @@ const si = require('systeminformation');
 const app = express();
 const port = 5000;
 
+// Helper functie om bytes naar GB te converteren
+function bytesToGB(bytes) {
+    return (bytes / (1024 ** 3)).toFixed(2); // Omrekenen naar GB en afronden op 2 decimalen
+}
+
 // Detecteer extern IP-adres
 async function getExternalIP() {
     try {
@@ -30,14 +35,14 @@ async function getExternalIP() {
     // Schakel CORS in voor gespecificeerde oorsprongen
     app.use(cors(corsOptions));
 
-    // Functie om RAM-gebruik te krijgen
+    // Functie om RAM-gebruik te krijgen in GB
     app.get('/ram', async (req, res) => {
         try {
             const memory = await si.mem();
             res.json({
-                total: memory.total,      // Totale RAM in bytes
-                used: memory.used,        // Gebruikte RAM in bytes
-                free: memory.free         // Vrije RAM in bytes
+                total: bytesToGB(memory.total),    // Totale RAM in GB
+                used: bytesToGB(memory.used),      // Gebruikte RAM in GB
+                free: bytesToGB(memory.free)       // Vrije RAM in GB
             });
         } catch (error) {
             console.error('Error fetching RAM usage:', error);
@@ -45,19 +50,19 @@ async function getExternalIP() {
         }
     });
 
-    // Functie om schijfgrootte en gebruik te krijgen
+    // Functie om schijfgrootte en gebruik te krijgen in GB
     app.get('/disk', async (req, res) => {
         try {
             const diskUsage = await si.fsSize();
 
-            // Als er meerdere schijven zijn, gebruik je de eerste. Dit kan worden aangepast.
+            // Neem de eerste schijf als voorbeeld
             const disk = diskUsage[0];
 
             res.json({
-                total: disk.size,           // Totale schijfgrootte in bytes
-                used: disk.used,            // Gebruikte schijfruimte in bytes
-                available: disk.available,  // Beschikbare schijfruimte in bytes
-                percentageUsed: disk.use    // Percentage gebruikt
+                total: bytesToGB(disk.size),           // Totale schijfgrootte in GB
+                used: bytesToGB(disk.used),            // Gebruikte schijfruimte in GB
+                available: bytesToGB(disk.available),  // Beschikbare schijfruimte in GB
+                percentageUsed: disk.use               // Percentage gebruikt
             });
         } catch (error) {
             console.error('Error fetching disk usage:', error);
