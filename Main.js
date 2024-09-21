@@ -1,98 +1,59 @@
 const express = require('express');
-const cors = require('cors');
-const fetch = require('node-fetch');
-const si = require('systeminformation');
+const os = require('os');
+const disk = require('diskusage');
+const path = require('path');
 
 const app = express();
-const port = 5000;
+const PORT = 5000;
 
-// Helper functie om bytes naar GB te converteren
-function bytesToGB(bytes) {
-    return (bytes / (1024 ** 3)).toFixed(2); // Omrekenen naar GB en afronden op 2 decimalen
+// Functie om de laatste herstarttijd te krijgen
+function getLastReboot() {
+  const uptime = os.uptime(); // Uptime in seconden
+  const currentTime = new Date();
+  const rebootTime = new Date(currentTime - uptime * 1000);
+  return rebootTime;
 }
 
-// Detecteer extern IP-adres
-async function getExternalIP() {
-    try {
-        const response = await fetch('https://api.ipify.org?format=json');
-        const data = await response.json();
-        return data.ip;
-    } catch (error) {
-        console.error('Error fetching external IP:', error);
-        return null;
-    }
-}
-
-(async () => {
-    const externalIP = await getExternalIP();
-
-    // CORS opties
-    const corsOptions = {
-        origin: externalIP ? [externalIP, 'https://davidnet.net'] : ['https://davidnet.net'],
-        optionsSuccessStatus: 200,
+// Functie om schijfinformatie te krijgen voor Ubuntu (/ root pad)
+async function getDiskUsage() {
+  try {
+    const { total, free } = await disk.check('/');
+    const used = total - free;
+    return {
+      total: (total / (1024 ** 3)).toFixed(2) + ' GB', // Schijftotaal in GB
+      free: (free / (1024 ** 3)).toFixed(2) + ' GB',   // Vrije ruimte in GB
+      used: (used / (1024 ** 3)).toFixed(2) + ' GB',   // Gebruikte ruimte in GB
     };
+  } catch (err) {
+    console.error("Error fetching disk usage:", err);
+    return null;
+  }
+}
 
-    // Schakel CORS in voor gespecificeerde oorsprongen
-    app.use(cors(corsOptions));
+// API endpoint om systeeminformatie op te halen
+app.get('/system-info', async (req, res) => {
+  const totalRam = (os.totalmem() / (1024 ** 3)).toFixed(2) + ' GB';
+  const freeRam = (os.freemem() / (1024 ** 3)).toFixed(2) + ' GB';
+  const usedRam = ((os.totalmem() - os.freemem()) / (1024 ** 3)).toFixed(2) + ' GB';
+  const lastReboot = getLastReboot();
+  const diskUsage = await getDiskUsage();
 
-    // Functie om RAM-gebruik te krijgen in GB
-    app.get('/ram', async (req, res) => {
-        try {
-            const memory = await si.mem();
-            res.json({
-                total: bytesToGB(memory.total),    // Totale RAM in GB
-                used: bytesToGB(memory.used),      // Gebruikte RAM in GB
-                free: bytesToGB(memory.free)       // Vrije RAM in GB
-            });
-        } catch (error) {
-            console.error('Error fetching RAM usage:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
-        }
-    });
+  if (!diskUsage) {
+    return res.status(500).json({ error: 'Failed to get disk usage' });
+  }
 
-    // Functie om schijfgrootte en gebruik te krijgen in GB
-    app.get('/disk', async (req, res) => {
-        try {
-            const diskUsage = await si.fsSize();
+  res.json({
+    ram: {
+      total: totalRam,
+      free: freeRam,
+      used: usedRam,
+    },
+    disk: diskUsage,
+    lastReboot: lastReboot.toISOString(),
+  });
+});
 
-            // Neem de eerste schijf als voorbeeld
-            const disk = diskUsage[0];
-
-            res.json({
-                total: bytesToGB(disk.size),           // Totale schijfgrootte in GB
-                used: bytesToGB(disk.used),            // Gebruikte schijfruimte in GB
-                available: bytesToGB(disk.available),  // Beschikbare schijfruimte in GB
-                percentageUsed: disk.use               // Percentage gebruikt
-            });
-        } catch (error) {
-            console.error('Error fetching disk usage:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
-        }
-    });
-
-    // Functie om actieve processen netjes te krijgen
-    app.get('/processes', async (req, res) => {
-        try {
-            const processes = await si.processes();
-
-            // Alleen relevante informatie weergeven in een nette lijst
-            const processList = processes.list.map(proc => ({
-                pid: proc.pid,           // Proces ID
-                user: proc.user,         // Gebruiker die het proces uitvoert
-                cpu: proc.pcpu.toFixed(2),  // CPU-gebruik in percentage
-                memory: proc.pmem.toFixed(2), // Geheugengebruik in percentage
-                command: proc.command    // Commando dat het proces uitvoert
-            }));
-
-            res.json(processList);
-        } catch (error) {
-            console.error('Error fetching processes:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
-        }
-    });
-
-    // Start de server
-    app.listen(port, () => {
-        console.log(`Server running at http://localhost:${port}`);
-    });
-})();
+// Start de server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
