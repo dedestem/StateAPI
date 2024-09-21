@@ -1,10 +1,14 @@
 const express = require('express');
 const os = require('os');
 const disk = require('diskusage');
+const Docker = require('dockerode'); // Dockerode importeren
 const path = require('path');
 
 const app = express();
 const PORT = 5000;
+
+// Docker instantie maken
+const docker = new Docker();
 
 // Functie om de laatste herstarttijd te krijgen
 function getLastReboot() {
@@ -51,6 +55,17 @@ app.get('/system-info', async (req, res) => {
     disk: diskUsage,
     lastReboot: lastReboot.toISOString(),
   });
+});
+
+// API endpoint om actieve Docker-containers op te halen
+app.get('/active-containers', async (req, res) => {
+  try {
+    const containers = await docker.listContainers({ all: false }); // Haal alleen actieve containers op
+    res.json(containers);
+  } catch (err) {
+    console.error("Error fetching active containers:", err);
+    res.status(500).json({ error: 'Failed to get active containers' });
+  }
 });
 
 // Start de server
