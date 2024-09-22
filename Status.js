@@ -58,6 +58,26 @@ app.get('/system-info', async (req, res) => {
   });
 });
 
+app.get('/ip', (req, res) => {
+    // Get external IP address
+    const externalIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    
+    // Get internal IP address
+    const interfaces = os.networkInterfaces();
+    let internalIp = '';
+    for (const iface of Object.values(interfaces)) {
+        for (const addr of iface) {
+            if (addr.family === 'IPv4' && !addr.internal) {
+                internalIp = addr.address;
+                break;
+            }
+        }
+        if (internalIp) break;
+    }
+
+    // Send response
+    res.send(`${internalIp}@${externalIp}`);
+});
 // API endpoint om actieve Docker-containers op te halen
 app.get('/active-containers', async (req, res) => {
   try {
