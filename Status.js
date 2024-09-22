@@ -119,6 +119,27 @@ app.get('/nodes', (req, res) => {
     });
 });
 
+app.get('/speedtest', (req, res) => {
+  exec('speedtest-cli --json', (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error executing speedtest: ${error}`);
+      return res.status(500).json({ error: 'Failed to perform speed test' });
+    }
+
+    try {
+      const result = JSON.parse(stdout);
+      res.json({
+        download: (result.download / (1024 ** 2)).toFixed(2) + ' Mbps', // Download snelheid in Mbps
+        upload: (result.upload / (1024 ** 2)).toFixed(2) + ' Mbps',     // Upload snelheid in Mbps
+        ping: result.ping + ' ms',                                      // Ping in ms
+      });
+    } catch (err) {
+      console.error("Error parsing speedtest result:", err);
+      res.status(500).json({ error: 'Failed to parse speed test result' });
+    }
+  });
+});
+
 // Start de server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
