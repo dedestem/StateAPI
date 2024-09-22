@@ -61,7 +61,8 @@ app.get('/system-info', async (req, res) => {
 app.get('/ip', (req, res) => {
     // Get external IP address
     const externalIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    
+    const cleanExternalIp = externalIp.replace(/^::ffff:/, ''); // Remove the ::ffff: prefix
+
     // Get internal IP address
     const interfaces = os.networkInterfaces();
     let internalIp = '';
@@ -76,7 +77,7 @@ app.get('/ip', (req, res) => {
     }
 
     // Send response
-    res.send(`${internalIp}@${externalIp}`);
+    res.send(`${internalIp}@${cleanExternalIp}`);
 });
 // API endpoint om actieve Docker-containers op te halen
 app.get('/active-containers', async (req, res) => {
