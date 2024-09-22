@@ -3,8 +3,6 @@ const os = require('os');
 const disk = require('diskusage');
 const Docker = require('dockerode'); // Dockerode importeren
 const path = require('path');
-const speedTest = require('speed-test');
-const ping = require('ping');
 const { exec } = require('child_process');
 
 const app = express();
@@ -119,26 +117,6 @@ app.get('/nodes', (req, res) => {
 
         res.json(processes);
     });
-});
-
-app.get('/speedtest', async (req, res) => {
-    const test = speedTest({ maxTime: 5000 }); // tijdslimiet van 5 seconden
-
-    try {
-        // Voer de speedtest uit
-        const speedData = await test();
-        
-        // Voer een ping-test uit
-        const pingResult = await ping.promise.probe('google.com'); // gebruik een betrouwbare host
-
-        res.json({
-            download: (speedData / 1e6).toFixed(2), // omzetting naar Mbps
-            upload: (speedData / 1e6).toFixed(2),
-            ping: pingResult.time, // pingtijd in ms
-        });
-    } catch (err) {
-        res.status(500).json({ error: 'Speedtest mislukt', details: err });
-    }
 });
 
 // Start de server
