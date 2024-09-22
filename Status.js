@@ -3,6 +3,8 @@ const os = require('os');
 const disk = require('diskusage');
 const Docker = require('dockerode'); // Dockerode importeren
 const path = require('path');
+const speedTest = require('speed-test');
+const ping = require('ping');
 const { exec } = require('child_process');
 
 const app = express();
