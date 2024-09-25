@@ -4,6 +4,7 @@ const disk = require('diskusage');
 const Docker = require('dockerode'); // Dockerode importeren
 const path = require('path');
 const { exec } = require('child_process');
+const axios = require('axios'); // Vergeet niet axios te importeren
 
 const app = express();
 const PORT = 5000;
@@ -64,6 +65,7 @@ app.get('/system-info', async (req, res) => {
   });
 });
 
+// IP Address Endpoint
 app.get('/ip', async (req, res) => {
     try {
         // Get internal IP address
@@ -80,7 +82,7 @@ app.get('/ip', async (req, res) => {
         }
 
         // Make API request to your own check IP API
-        const response = await axios.get('http://your-server-ip/checkip.php');
+        const response = await axios.get('http://davidnet.net/API/MyIp.php'); // Update with actual IP or domain
         const externalIp = response.data.ip;
 
         // Send response
@@ -102,15 +104,17 @@ app.get('/active-containers', async (req, res) => {
   }
 });
 
+// Test Endpoint
 app.get('/active', async (req, res) => {
   try {
     res.json("Hello");
   } catch (err) {
-    console.error("Error telling im online!", err);
-    res.status(500).json({ error: 'Error telling im online!' });
+    console.error("Error telling I'm online!", err);
+    res.status(500).json({ error: 'Error telling I am online!' });
   }
 });
 
+// Nodes Endpoint
 app.get('/nodes', (req, res) => {
     exec("ps aux | grep '[n]ode'", (error, stdout, stderr) => {
         if (error) {
@@ -131,6 +135,7 @@ app.get('/nodes', (req, res) => {
     });
 });
 
+// Speed Test Endpoint
 app.get('/speedtest', (req, res) => {
   exec('speedtest-cli --json', (error, stdout, stderr) => {
     if (error) {
