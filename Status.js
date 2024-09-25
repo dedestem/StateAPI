@@ -79,9 +79,9 @@ app.get('/ip', async (req, res) => {
             if (internalIp) break;
         }
 
-        // Make API request to get external IP address using Amazon's checkip service
-        const response = await axios.get('https://checkip.amazonaws.com/');
-        const externalIp = response.data.trim(); // The response is just the IP address
+        // Make API request to your own check IP API
+        const response = await axios.get('http://your-server-ip/checkip.php');
+        const externalIp = response.data.ip;
 
         // Send response
         res.send(`${internalIp}@${externalIp}`);
