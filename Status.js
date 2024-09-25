@@ -35,6 +35,12 @@ async function getDiskUsage() {
   }
 }
 
+// CPU INFO
+app.get('/cpu-info', (req, res) => {
+  const cpuInfo = os.cpus();
+  res.json(cpuInfo);
+});
+
 // API endpoint om systeeminformatie op te halen
 app.get('/system-info', async (req, res) => {
   const totalRam = (os.totalmem() / (1024 ** 3)).toFixed(2) + ' GB';
