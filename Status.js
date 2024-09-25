@@ -63,11 +63,13 @@ app.get('/system-info', async (req, res) => {
     lastReboot: lastReboot.toISOString(),
   });
 });
-
 app.get('/ip', (req, res) => {
     // Get external IP address
     const externalIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const cleanExternalIp = externalIp.replace(/^::ffff:/, ''); // Remove the ::ffff: prefix
+
+    // Handling IPv6-mapped IPv4 addresses and cleaning up
+    const cleanExternalIp = Array.isArray(externalIp) ? externalIp[0] : externalIp; // Take the first IP if it's an array
+    const finalExternalIp = cleanExternalIp.replace(/^::ffff:/, ''); // Remove the ::ffff: prefix
 
     // Get internal IP address
     const interfaces = os.networkInterfaces();
@@ -83,8 +85,9 @@ app.get('/ip', (req, res) => {
     }
 
     // Send response
-    res.send(`${internalIp}@${cleanExternalIp}`);
+    res.send(`${internalIp}@${finalExternalIp}`);
 });
+
 // API endpoint om actieve Docker-containers op te halen
 app.get('/active-containers', async (req, res) => {
   try {
