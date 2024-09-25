@@ -79,14 +79,14 @@ app.get('/ip', async (req, res) => {
             if (internalIp) break;
         }
 
-        // Make API request to get external IP address
-        const response = await axios.get('https://api.ipify.org?format=json');
-        const externalIp = response.data.ip;
+        // Make API request to get external IP address using Amazon's checkip service
+        const response = await axios.get('https://checkip.amazonaws.com/');
+        const externalIp = response.data.trim(); // The response is just the IP address
 
         // Send response
         res.send(`${internalIp}@${externalIp}`);
     } catch (error) {
-        console.error('Error fetching external IP:', error);
+        console.error('Error fetching external IP:', error.response ? error.response.data : error.message);
         res.status(500).send('Error fetching IP addresses');
     }
 });
