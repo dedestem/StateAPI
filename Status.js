@@ -63,29 +63,32 @@ app.get('/system-info', async (req, res) => {
     lastReboot: lastReboot.toISOString(),
   });
 });
-app.get('/ip', (req, res) => {
-    // Get external IP address
-    const externalIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
-    // Handling IPv6-mapped IPv4 addresses and cleaning up
-    const cleanExternalIp = Array.isArray(externalIp) ? externalIp[0] : externalIp; // Take the first IP if it's an array
-    const finalExternalIp = cleanExternalIp.replace(/^::ffff:/, ''); // Remove the ::ffff: prefix
-
-    // Get internal IP address
-    const interfaces = os.networkInterfaces();
-    let internalIp = '';
-    for (const iface of Object.values(interfaces)) {
-        for (const addr of iface) {
-            if (addr.family === 'IPv4' && !addr.internal) {
-                internalIp = addr.address;
-                break;
+app.get('/ip', async (req, res) => {
+    try {
+        // Get internal IP address
+        const interfaces = os.networkInterfaces();
+        let internalIp = '';
+        for (const iface of Object.values(interfaces)) {
+            for (const addr of iface) {
+                if (addr.family === 'IPv4' && !addr.internal) {
+                    internalIp = addr.address;
+                    break;
+                }
             }
+            if (internalIp) break;
         }
-        if (internalIp) break;
-    }
 
-    // Send response
-    res.send(`${internalIp}@${finalExternalIp}`);
+        // Make API request to get external IP address
+        const response = await axios.get('https://api.ipify.org?format=json');
+        const externalIp = response.data.ip;
+
+        // Send response
+        res.send(`${internalIp}@${externalIp}`);
+    } catch (error) {
+        console.error('Error fetching external IP:', error);
+        res.status(500).send('Error fetching IP addresses');
+    }
 });
 
 // API endpoint om actieve Docker-containers op te halen
