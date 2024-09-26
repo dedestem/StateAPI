@@ -36,6 +36,35 @@ async function getDiskUsage() {
   }
 }
 
+// Functie om het batterijpercentage op te halen
+function getBatteryPercentage() {
+  return new Promise((resolve, reject) => {
+    exec("acpi -b", (error, stdout, stderr) => {
+      if (error) {
+        return reject(error);
+      }
+
+      const match = stdout.match(/(\d+)%/);
+      if (match) {
+        resolve(parseInt(match[1], 10));
+      } else {
+        reject(new Error('Could not parse battery percentage'));
+      }
+    });
+  });
+}
+
+// Battery Endpoint
+app.get('/battery', async (req, res) => {
+  try {
+    const batteryPercentage = await getBatteryPercentage();
+    res.json({ battery: batteryPercentage + '%' });
+  } catch (error) {
+    console.error('Error fetching battery percentage:', error);
+    res.status(500).json({ error: 'Failed to get battery percentage' });
+  }
+});
+
 // CPU INFO
 app.get('/cpu-info', (req, res) => {
   const cpuInfo = os.cpus();
