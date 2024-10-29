@@ -7,7 +7,7 @@ const { exec } = require('child_process');
 const axios = require('axios'); // Vergeet niet axios te importeren
 
 const app = express();
-const PORT = 5000;
+const PORT = 4000;
 
 // Docker instantie maken
 const docker = new Docker();
