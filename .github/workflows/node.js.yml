@@ -28,7 +28,6 @@ jobs:
         cache: 'npm'
 
     
-    - name: Try npm ci
-      run: npm ci || npm install
+    - run: pm install
     - run: npm run build --if-present
     - run: npm test
