@@ -28,6 +28,6 @@ jobs:
         cache: 'npm'
 
     
-    - run: pm install
+    - run: npm install
     - run: npm run build --if-present
     - run: npm test
