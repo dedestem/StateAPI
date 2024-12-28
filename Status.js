@@ -127,6 +127,24 @@ Api.get('/Speedtest', (req, res) => {
 
 Api.get('/Battery', async (req, res) => {
     try {
+        // Functie om het batterijpercentage op te halen
+        function getBatteryPercentage() {
+            return new Promise((resolve, reject) => {
+            exec("acpi -b", (error, stdout, stderr) => {
+                if (error) {
+                return reject(error);
+                }
+        
+                const match = stdout.match(/(\d+)%/);
+                if (match) {
+                resolve(parseInt(match[1], 10));
+                } else {
+                reject(new Error('Could not parse battery percentage'));
+                }
+            });
+            });
+        }
+  
         const batteryPercentage = await getBatteryPercentage();
         res.json({ battery: batteryPercentage + '%' });
     } catch (error) {
