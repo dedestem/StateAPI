@@ -17,7 +17,7 @@ import { Api, RegisterNode, State } from './DN-Node.js';
 
 // Main
 Api.get('/', (req, res) => {
-    res.send('Hello!');
+    res.send('https://github.com/dedestem/StateAPI');
 });
 
 Api.get('/Cpu', (req, res) => {
