@@ -7,10 +7,10 @@
 // *\\
 
 // Services
-const OS = require('OS');
-const Disk = require('diskusage');
-const Docker = require('dockerode');
-const Axios = require('axios');
+import OS from 'os';
+import Disk from 'diskusage';
+import Docker from 'dockerode';
+import Axios from 'axios';
 
 // Modules
 import { Api, RegisterNode, State } from './DN-Node.js';
@@ -134,5 +134,6 @@ Api.get('/Battery', async (req, res) => {
         res.status(500).json({ error: 'Failed to get battery percentage' });
     }
 });
+
 // Register
-RegisterNode(1000);
+RegisterNode(2000);
