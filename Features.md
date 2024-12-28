@@ -1,0 +1,16 @@
+# Features
+ - CPU Info     V
+ - RAM Info     V
+ - DISK Info
+ - Network usage Info
+ - Uptime
+ - Open Ports
+ - Firewall status
+ - Temperatures
+ - Power suppl info
+ - Active net connections
+ - Make for everthing an diagram of like 7 days
+ - Intern ip extern ip mac address etc
+ - Docker Containers
+ - All Nodes from node js - ps aux | grep '[n]ode
+ - speedtest - of the internet
